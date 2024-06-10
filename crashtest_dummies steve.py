@@ -182,40 +182,34 @@ print(nan_counts)
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC # feature importance
+# MAGIC # spark profiling
 
 # COMMAND ----------
 
-crash.info()
+pip install --upgrade pandas
 
 # COMMAND ----------
 
-for c in crash.columns:
-    print(c)
+dbutils.data.summarize(df)
 
 # COMMAND ----------
 
-crash['Person Death Count'].unique()
+import ydata_profiling
 
 # COMMAND ----------
 
-import pandas as pd
+from pyspark.sql import SparkSession
+from ydata_profiling import ProfileReport
 
-# Assuming 'crash' is your DataFrame already loaded with the data
+#create or use an existing Spark session
+spark = SparkSession \
+    .builder \
+    .appName("Python Spark profiling example") \
+    .getOrCreate()
 
-# Step 1: Filter out non-numerical columns
-numerical_crash = crash.select_dtypes(include=['int64', 'float64'])
+df = spark.read.csv("{insert-csv-file-path}")
+df.printSchema()
 
-# Step 2: Compute the correlation matrix
-correlation_matrix = numerical_crash.corr()
+report = ProfileReport(df, title="Profiling pyspark DataFrame")
+report.to_file('profile.html')
 
-# Step 3: Extract correlations related to 'Person Death Count'
-correlations_with_death_count = correlation_matrix['Person Death Count'].drop('Person Death Count', errors='ignore')  # Ignore self-correlation
-
-# Display the correlations sorted by absolute value to see the strongest relationships, either positive or negative
-print(correlations_with_death_count.abs().sort_values(ascending=False))
-
-
-# COMMAND ----------
-
-crash['Fatal Crash Flag'].unique()

@@ -1,11 +1,12 @@
-# dataai2024
-dataai2024
+# DAIS24 GenAI Hackathon
 
-Testing :
-Thomas
-Steve
-Einar
-Christopher
+Team 9: Crashtest Dummies
 
+Team members:
+
+- Thomas
+- Steve Bolotin
+- Einar Ellingsen
+- Christopher
 
 ![image](./Team_Crashtest_Dummies.jpg)

@@ -1,21 +1,18 @@
 # Databricks notebook source
-# MAGIC %pip install --upgrade pandas
-
-# COMMAND ----------
-
-# MAGIC %pip install --upgrade ydata_profiling
-
-# COMMAND ----------
-
-# MAGIC %pip install --upgrade typing_extensions
-
-# COMMAND ----------
-
 dbutils.library.restartPython()
 
 # COMMAND ----------
 
+
+import pandas as pd
+import dateutil
 import ydata_profiling
+from ydata_profiling import ProfileReport
+
+from sklearn.preprocessing import LabelEncoder
+
+import seaborn as sns
+import matplotlib.pyplot as plt
 
 # COMMAND ----------
 
@@ -28,84 +25,147 @@ type(df)
 
 # COMMAND ----------
 
-df.head()
-
-# COMMAND ----------
-
-import pandas as pd
-from ydata_profiling import ProfileReport
-
-# COMMAND ----------
-
 # Convert Spark DataFrame to Pandas DataFrame
 pandas_df = df.toPandas()
 
+# COMMAND ----------
+
+columns_to_include = [
+    'Vehicle Make', 'Vehicle Model Name', 'Vehicle Model Year', 
+    'Vehicle Parked Flag',
+    'Person Age', 'Person Ethnicity', 'Person Gender', 
+    'Crash Date', 'Crash Time'
+]
+
+# Filter the DataFrame to include only the specified columns
+pandas_df = pandas_df.filter(items=columns_to_include)
+
+# Display the filtered DataFrame
+print("Filtered DataFrame with specified columns:")
+print(pandas_df)
+
+# Optionally, display the filtered DataFrame as HTML in Databricks
+pandas_df_html = pandas_df.to_html()
+#displayHTML(filtered_df_html)
+
+# COMMAND ----------
+
+# Assuming pandas_df is your DataFrame
+pandas_df = pandas_df.dropna(axis=1, how='all')
+
+
+# COMMAND ----------
+
+# Extract day of week and month number
+pandas_df['Crash Day of Week'] = pandas_df['Crash Date'].dt.dayofweek  # Monday=0, Sunday=6
+pandas_df['Crash Month'] = pandas_df['Crash Date'].dt.month
+
+# Convert categorical columns to numeric
+label_encoders = {}
+for column in pandas_df.select_dtypes(include=['object']).columns:
+    le = LabelEncoder()
+    pandas_df[column] = le.fit_transform(pandas_df[column].astype(str))
+    label_encoders[column] = le
+
+# Convert Crash Time to numeric (minutes since midnight)
+#pandas_df['Crash Time'] = pd.to_datetime(pandas_df['Crash Time'], format='%H:%M', errors='coerce')
+#pandas_df['Crash Time Minutes'] = pandas_df['Crash Time'].dt.hour * 60 + pandas_df['Crash Time'].dt.minute
+
+
+
+
+
+
+
+# COMMAND ----------
+
+pandas_df
+
+# COMMAND ----------
+
+
+# Compute the correlation matrix
+correlation_matrix = pandas_df.corr()
+
+# Unstack the matrix to a long format
+correlation_pairs = correlation_matrix.unstack()
+
+# Convert to a DataFrame and reset index
+correlation_pairs_df = pd.DataFrame(correlation_pairs, columns=['Correlation']).reset_index()
+
+# Rename columns for clarity
+correlation_pairs_df.columns = ['Variable1', 'Variable2', 'Correlation']
+
+# Filter to include only correlations where Variable1 is 'Fatal Crash Flag'
+correlation_pairs_df = correlation_pairs_df[correlation_pairs_df['Variable1'] == 'Fatal Crash Flag']
+
+# Exclude any values where Variable2 contains the words "death" or "injured"
+correlation_pairs_df = correlation_pairs_df[
+    ~correlation_pairs_df['Variable2'].str.contains(r'death|injured|Injury', case=False, na=False)
+]
+
+# Sort by absolute correlation values, but keep original values for context
+correlation_pairs_df['AbsCorrelation'] = correlation_pairs_df['Correlation'].abs()
+correlation_pairs_df = correlation_pairs_df.sort_values(by='AbsCorrelation', ascending=False)
+
+# Filter out self-correlations (where Variable1 == Variable2)
+correlation_pairs_df = correlation_pairs_df[correlation_pairs_df['Variable1'] != correlation_pairs_df['Variable2']]
+
+# Drop the auxiliary column
+correlation_pairs_df = correlation_pairs_df.drop(columns=['AbsCorrelation'])
+
+# Filter out correlations greater than 0.9 or less than -0.9
+#correlation_pairs_df = correlation_pairs_df[(correlation_pairs_df['Correlation'] <= 0.9) & 
+#                                            (correlation_pairs_df['Correlation'] >= -0.9)
+#]
+
+# Display the sorted correlation pairs
+#print("Sorted Correlation Pairs:")
+#print(correlation_pairs_df)
+
+# Optionally, display the sorted correlation pairs as HTML
+correlation_pairs_html = correlation_pairs_df.to_html()
+displayHTML(correlation_pairs_html)
+
+# COMMAND ----------
+
 # Generate the profile report
 report = ProfileReport(pandas_df,
-                       title='Crash EDA',
-                       infer_dtypes=False,
-                       interactions=None,
-                       missing_diagrams=None,
-                       correlations={"auto": {"calculate": False},
-                                     "pearson": {"calculate": True},
-                                     "spearman": {"calculate": True}})
+                title='Crash Data EDA',
+                infer_dtypes=False,
+                interactions=None,
+                missing_diagrams=None,
+                correlations={"auto": {"calculate": False},
+                              "pearson": {"calculate": True},
+                              "spearman": {"calculate": True}})
 
 # COMMAND ----------
 
-pandas_df.display()
-
-# COMMAND ----------
-
-# Print data types of all columns
-print("Data types of all columns in the DataFrame:")
-#print(pandas_df.dtypes)
-
-# Optionally, format the output more nicely
-data_types = pandas_df.dtypes
-for column, dtype in data_types.items():
-    print(f"{column}: {dtype}")
-
-# COMMAND ----------
-
-# Convert date columns to datetime and handle nonzero nanoseconds
-for column in pandas_df.columns:
-    if pandas_df[column].dtype == 'object':
-        try:
-            pandas_df[column] = pd.to_datetime(pandas_df[column], errors='coerce')
-        except Exception as e:
-            print(f"Error converting column {column} to datetime: {e}")
+pandas_df.filter(like='Date', axis=1)
 
 
 # COMMAND ----------
 
-# Generate the profile report
-report = ProfileReport(pandas_df,
-                       title='Crash EDA',
-                       infer_dtypes=False,
-                       interactions=None,
-                       missing_diagrams=None,
-                       correlations={"auto": {"calculate": False},
-                                     "pearson": {"calculate": True},
-                                     "spearman": {"calculate": True}})
+Vehicle Make	Vehicle Model Name	Vehicle Model Year	Vehicle Parked Flag	Vehicle Towed By	Vehicle Towed To
+Person Age  Person Ethnicity    Person Gender   Crash Date  Crash Time
+
+
 
 # COMMAND ----------
 
-import dateutil
+
+# Optionally, visualize the correlation matrix using a heatmap
+plt.figure(figsize=(50, 8))
+sns.heatmap(correlation_matrix, annot=True, cmap='coolwarm', fmt='.2f', linewidths=.5)
+plt.title('Correlation Matrix Heatmap')
+plt.show()
+
 
 # COMMAND ----------
 
-# Save the profile report to an HTML file
-#report.to_file("/dbfs/FileStore/profile_report.html")
-
-# Display the profile report in Databricks notebook
-#displayHTML(profile.to_html())
-
-# Optionally, display the DataFrame as HTML
 report_html = report.to_html()
 displayHTML(report_html)
 
-
-
 # COMMAND ----------
 
-pd.Timestamp
+correlation_pairs_df.
