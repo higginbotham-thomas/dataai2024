@@ -46,9 +46,7 @@ pandas_df_html = pandas_df.to_html()
 
 # COMMAND ----------
 
-# Extract day of week and month number
-pandas_df['Crash Day of Week'] = pandas_df['Crash Date'].dt.dayofweek  # Monday=0, Sunday=6
-pandas_df['Crash Month'] = pandas_df['Crash Date'].dt.month
+
 
 # Convert categorical columns to numeric
 label_encoders = {}
@@ -61,6 +59,10 @@ for column in pandas_df.select_dtypes(include=['object']).columns:
 
 # Convert Crash Date to datetime
 pandas_df['Crash Date'] = pd.to_datetime(pandas_df['Crash Date'], errors='coerce')
+
+# Extract day of week and month number
+pandas_df['Crash Day of Week'] = pandas_df['Crash Date'].dt.dayofweek  # Monday=0, Sunday=6
+pandas_df['Crash Month'] = pandas_df['Crash Date'].dt.month
 
 # Convert Crash Time from numeric to time
 def convert_to_time(crash_time):
@@ -76,30 +78,24 @@ def categorize_time(crash_time):
     if pd.isna(crash_time):
         return 'Unknown'
     if crash_time >= pd.to_datetime('00:00').time() and crash_time < pd.to_datetime('06:00').time():
-        return 'Midnight to 6 AM'
+        return '1'
     elif crash_time >= pd.to_datetime('06:00').time() and crash_time < pd.to_datetime('12:00').time():
-        return '6 AM to Noon'
+        return '2'
     elif crash_time >= pd.to_datetime('12:00').time() and crash_time < pd.to_datetime('18:00').time():
-        return 'Noon to 6 PM'
+        return '3'
     elif crash_time >= pd.to_datetime('18:00').time() and crash_time <= pd.to_datetime('23:59').time():
-        return '6 PM to Midnight'
+        return '4'
 
 pandas_df['Crash Time Category'] = pandas_df['Crash Time'].apply(categorize_time)
 
-
-
-
-
+# Drop the original Crash Date and Crash Time columns
+pandas_df = pandas_df.drop(columns=['Crash Date', 'Crash Time'])
 
 
 # COMMAND ----------
 
 # Converting the spark df to a pandas df
 pandas_df = pandas_df.dropna(axis=1, how='all')
-
-
-# COMMAND ----------
-
 
 
 # COMMAND ----------

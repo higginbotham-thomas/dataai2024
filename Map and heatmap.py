@@ -57,7 +57,7 @@ df = df.dropna(subset=["Latitude", "Longitude"])
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ### Map
+# MAGIC ### Map showing crash locations
 
 # COMMAND ----------
 

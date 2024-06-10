@@ -15,3 +15,7 @@
 - Map and heatmap
 
 ![image](./Team_Crashtest_Dummies.jpg)
+
+![image](./map.jpg)
+
+![image](./heatmap.jpg)
