@@ -21,10 +21,6 @@ df.count()
 
 # COMMAND ----------
 
-type(df)
-
-# COMMAND ----------
-
 # Convert Spark DataFrame to Pandas DataFrame
 pandas_df = df.toPandas()
 
@@ -50,11 +46,9 @@ pandas_df_html = pandas_df.to_html()
 
 # COMMAND ----------
 
-# Converting the spark df to a pandas df
-pandas_df = pandas_df.dropna(axis=1, how='all')
-
-
-# COMMAND ----------
+# Extract day of week and month number
+pandas_df['Crash Day of Week'] = pandas_df['Crash Date'].dt.dayofweek  # Monday=0, Sunday=6
+pandas_df['Crash Month'] = pandas_df['Crash Date'].dt.month
 
 # Convert categorical columns to numeric
 label_encoders = {}
@@ -63,9 +57,7 @@ for column in pandas_df.select_dtypes(include=['object']).columns:
     pandas_df[column] = le.fit_transform(pandas_df[column].astype(str))
     label_encoders[column] = le
 
-# Extract day of week and month number
-pandas_df['Crash Day of Week'] = pandas_df['Crash Date'].dt.dayofweek  # Monday=0, Sunday=6
-pandas_df['Crash Month'] = pandas_df['Crash Date'].dt.month
+
 
 # Convert Crash Date to datetime
 pandas_df['Crash Date'] = pd.to_datetime(pandas_df['Crash Date'], errors='coerce')
@@ -97,6 +89,16 @@ pandas_df['Crash Time Category'] = pandas_df['Crash Time'].apply(categorize_time
 
 
 
+
+
+
+# COMMAND ----------
+
+# Converting the spark df to a pandas df
+pandas_df = pandas_df.dropna(axis=1, how='all')
+
+
+# COMMAND ----------
 
 
 
