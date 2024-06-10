@@ -79,7 +79,37 @@ for column in pandas_df.select_dtypes(include=['object']).columns:
 
 # COMMAND ----------
 
-pandas_df
+# Convert Crash Date to datetime
+pandas_df['Crash Date'] = pd.to_datetime(pandas_df['Crash Date'], errors='coerce')
+
+# Convert Crash Time from numeric to time
+def convert_to_time(crash_time):
+    if pd.isna(crash_time):
+        return pd.NaT
+    crash_time_str = f'{int(crash_time):04}'
+    return pd.to_datetime(crash_time_str, format='%H%M').time()
+
+pandas_df['Crash Time'] = pandas_df['Crash Time'].apply(convert_to_time)
+
+# Create a new column to group times into categories
+def categorize_time(crash_time):
+    if pd.isna(crash_time):
+        return 'Unknown'
+    if crash_time >= pd.to_datetime('00:00').time() and crash_time < pd.to_datetime('06:00').time():
+        return 'Midnight to 6 AM'
+    elif crash_time >= pd.to_datetime('06:00').time() and crash_time < pd.to_datetime('12:00').time():
+        return '6 AM to Noon'
+    elif crash_time >= pd.to_datetime('12:00').time() and crash_time < pd.to_datetime('18:00').time():
+        return 'Noon to 6 PM'
+    elif crash_time >= pd.to_datetime('18:00').time() and crash_time <= pd.to_datetime('23:59').time():
+        return '6 PM to Midnight'
+
+pandas_df['Crash Time Category'] = pandas_df['Crash Time'].apply(categorize_time)
+
+
+# COMMAND ----------
+
+print(pandas_df)
 
 # COMMAND ----------
 

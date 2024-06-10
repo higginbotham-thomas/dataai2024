@@ -72,17 +72,12 @@ city_map
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ### Heatmap
+# MAGIC ### Heatmap showing crash locations
 
 # COMMAND ----------
 
 locations = [[y, x, 10] for (x, y) in zip(pandas_df.Longitude, pandas_df.Latitude)]
-
-city_heatmap = Heatmap(
-    locations=locations,
-    radius=10
-)
-
+city_heatmap = Heatmap(locations=locations, radius=10)
 city_map = Map(center=(30.2667, -97.7333), zoom=10)
 city_map.add(city_heatmap)
 city_map
