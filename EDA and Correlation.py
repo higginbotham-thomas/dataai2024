@@ -40,36 +40,25 @@ pandas_df = pandas_df.filter(items=columns_to_include)
 print("Filtered DataFrame with specified columns:")
 print(pandas_df)
 
-# Optionally, display the filtered DataFrame as HTML in Databricks
-pandas_df_html = pandas_df.to_html()
-#displayHTML(filtered_df_html)
-
 # COMMAND ----------
-
-
 
 # Convert categorical columns to numeric
 label_encoders = {}
 for column in pandas_df.select_dtypes(include=['object']).columns:
-    le = LabelEncoder()
-    pandas_df[column] = le.fit_transform(pandas_df[column].astype(str))
-    label_encoders[column] = le
-
-
+    if column not in ['Crash Date', 'Crash Time']:  # Exclude date and time columns
+        le = LabelEncoder()
+        pandas_df[column] = le.fit_transform(pandas_df[column].astype(str))
+        label_encoders[column] = le
 
 # Convert Crash Date to datetime
 pandas_df['Crash Date'] = pd.to_datetime(pandas_df['Crash Date'], errors='coerce')
-
-# Extract day of week and month number
-pandas_df['Crash Day of Week'] = pandas_df['Crash Date'].dt.dayofweek  # Monday=0, Sunday=6
-pandas_df['Crash Month'] = pandas_df['Crash Date'].dt.month
 
 # Convert Crash Time from numeric to time
 def convert_to_time(crash_time):
     if pd.isna(crash_time):
         return pd.NaT
     crash_time_str = f'{int(crash_time):04}'
-    return pd.to_datetime(crash_time_str, format='%H%M').time()
+    return pd.to_datetime(crash_time_str, format='%H%M')
 
 pandas_df['Crash Time'] = pandas_df['Crash Time'].apply(convert_to_time)
 
@@ -77,19 +66,31 @@ pandas_df['Crash Time'] = pandas_df['Crash Time'].apply(convert_to_time)
 def categorize_time(crash_time):
     if pd.isna(crash_time):
         return 'Unknown'
-    if crash_time >= pd.to_datetime('00:00').time() and crash_time < pd.to_datetime('06:00').time():
+    if crash_time.time() >= pd.to_datetime('00:00').time() and crash_time.time() < pd.to_datetime('06:00').time():
         return '1'
-    elif crash_time >= pd.to_datetime('06:00').time() and crash_time < pd.to_datetime('12:00').time():
+    elif crash_time.time() >= pd.to_datetime('06:00').time() and crash_time.time() < pd.to_datetime('12:00').time():
         return '2'
-    elif crash_time >= pd.to_datetime('12:00').time() and crash_time < pd.to_datetime('18:00').time():
+    elif crash_time.time() >= pd.to_datetime('12:00').time() and crash_time.time() < pd.to_datetime('18:00').time():
         return '3'
-    elif crash_time >= pd.to_datetime('18:00').time() and crash_time <= pd.to_datetime('23:59').time():
+    elif crash_time.time() >= pd.to_datetime('18:00').time() and crash_time.time() <= pd.to_datetime('23:59').time():
         return '4'
 
 pandas_df['Crash Time Category'] = pandas_df['Crash Time'].apply(categorize_time)
 
+# Convert Crash Date to day of week (0=Monday, 6=Sunday) and month number
+pandas_df['Crash Day of Week'] = pandas_df['Crash Date'].dt.dayofweek  # Monday=0, Sunday=6
+pandas_df['Crash Month'] = pandas_df['Crash Date'].dt.month
+
 # Drop the original Crash Date and Crash Time columns
 pandas_df = pandas_df.drop(columns=['Crash Date', 'Crash Time'])
+
+# Ensure Crash Day of Week is numeric
+pandas_df['Crash Day of Week'] = pandas_df['Crash Day of Week'].astype(int)
+
+# Check the data types of the columns
+print("Data types of the columns:")
+print(pandas_df.dtypes)
+
 
 
 # COMMAND ----------
@@ -101,6 +102,15 @@ pandas_df = pandas_df.dropna(axis=1, how='all')
 # COMMAND ----------
 
 pandas_df
+
+# COMMAND ----------
+
+pandas_df.corr()
+
+# COMMAND ----------
+
+print("Data types of the columns:")
+print(pandas_df.dtypes)
 
 # COMMAND ----------
 
