@@ -109,7 +109,7 @@ pandas_df['Crash Time Category'] = pandas_df['Crash Time'].apply(categorize_time
 
 # COMMAND ----------
 
-print(pandas_df)
+pandas_df
 
 # COMMAND ----------
 
