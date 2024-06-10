@@ -11,7 +11,7 @@
 
 **Main notebooks**
 
-- [EDA and Correlations](EDA and Correlations.py)
-- [Map and heatmap](Map and heatmap.py)
+- EDA and Correlations
+- Map and heatmap
 
 ![image](./Team_Crashtest_Dummies.jpg)

@@ -50,11 +50,24 @@ pandas_df_html = pandas_df.to_html()
 
 # COMMAND ----------
 
-# Assuming pandas_df is your DataFrame
+# Converting the spark df to a pandas df
 pandas_df = pandas_df.dropna(axis=1, how='all')
 
 
 # COMMAND ----------
+
+
+
+# Convert categorical columns to numeric
+label_encoders = {}
+for column in pandas_df.select_dtypes(include=['object']).columns:
+    le = LabelEncoder()
+    pandas_df[column] = le.fit_transform(pandas_df[column].astype(str))
+    label_encoders[column] = le
+
+# Extract day of week and month number
+pandas_df['Crash Day of Week'] = pandas_df['Crash Date'].dt.dayofweek  # Monday=0, Sunday=6
+pandas_df['Crash Month'] = pandas_df['Crash Date'].dt.month
 
 # Convert Crash Date to datetime
 pandas_df['Crash Date'] = pd.to_datetime(pandas_df['Crash Date'], errors='coerce')
@@ -82,26 +95,6 @@ def categorize_time(crash_time):
         return '6 PM to Midnight'
 
 pandas_df['Crash Time Category'] = pandas_df['Crash Time'].apply(categorize_time)
-
-
-# COMMAND ----------
-
-
-
-# Convert categorical columns to numeric
-label_encoders = {}
-for column in pandas_df.select_dtypes(include=['object']).columns:
-    le = LabelEncoder()
-    pandas_df[column] = le.fit_transform(pandas_df[column].astype(str))
-    label_encoders[column] = le
-
-# Extract day of week and month number
-pandas_df['Crash Day of Week'] = pandas_df['Crash Date'].dt.dayofweek  # Monday=0, Sunday=6
-pandas_df['Crash Month'] = pandas_df['Crash Date'].dt.month
-
-# Convert Crash Time to numeric (minutes since midnight)
-#pandas_df['Crash Time'] = pd.to_datetime(pandas_df['Crash Time'], format='%H:%M', errors='coerce')
-#pandas_df['Crash Time Minutes'] = pandas_df['Crash Time'].dt.hour * 60 + pandas_df['Crash Time'].dt.minute
 
 
 
