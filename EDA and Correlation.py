@@ -56,8 +56,6 @@ pandas_df = pandas_df.dropna(axis=1, how='all')
 
 # COMMAND ----------
 
-
-
 # Convert categorical columns to numeric
 label_encoders = {}
 for column in pandas_df.select_dtypes(include=['object']).columns:
