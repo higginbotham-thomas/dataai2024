@@ -167,4 +167,37 @@ print(crash.columns)
 
 # COMMAND ----------
 
+#nan in data
+import pandas as pd
+
+# Load your data into a DataFrame
+# df = pd.read_csv('your_data.csv')  # Uncomment and modify with your file path
+
+# Calculating NaN counts per column
+nan_counts = crash.isnull().sum()
+
+# Displaying the NaN counts for each column
+print(nan_counts)
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC # spark profiling
+
+# COMMAND ----------
+
+from pyspark.sql import SparkSession
+from ydata_profiling import ProfileReport
+
+#create or use an existing Spark session
+spark = SparkSession \
+    .builder \
+    .appName("Python Spark profiling example") \
+    .getOrCreate()
+
+df = spark.read.csv("{insert-csv-file-path}")
+df.printSchema()
+
+report = ProfileReport(df, title="Profiling pyspark DataFrame")
+report.to_file('profile.html')
 

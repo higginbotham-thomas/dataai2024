@@ -6,3 +6,6 @@ Thomas
 Steve
 Einar
 Christopher
+
+
+![image](./Team_Crashtest_Dummies.jpg)
