@@ -186,6 +186,18 @@ print(nan_counts)
 
 # COMMAND ----------
 
+pip install --upgrade pandas
+
+# COMMAND ----------
+
+dbutils.data.summarize(df)
+
+# COMMAND ----------
+
+import ydata_profiling
+
+# COMMAND ----------
+
 from pyspark.sql import SparkSession
 from ydata_profiling import ProfileReport
 
